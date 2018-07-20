@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Crypto Scanner</title>
+    <meta charset="UTF-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=Edge, chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" id="description" content="My awesome web app." />
+    <meta name="author" content="Rainner Lins | @raintek_ | https://rainnerlins.com | https://github.com/rainner" />
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="public/css/fonts.css" />
+    <link rel="stylesheet" href="public/css/styles.css" />
+  </head>
+  <body>
+
+    <div id="app" v-cloak>
+
+      <header class="header">
+        <div class="container">
+          <div class="header-content flex-row flex-middle flex-stretch">
+            <div class="header-info text-clip flex-1">
+              <h1 class="icon-twtr iconLeft text-blue text-clip">Twitter Crypto Scanner</h1>
+            </div>
+            <form class="header-search" action="#" autocomplete="off">
+              <input type="text" name="search" placeholder="Search page..." v-model="search" />
+            </form>
+          </div>
+        </div>
+      </header>
+
+      <main class="main">
+        <div class="container">
+
+          <div class="flex-row flex-stretch">
+
+            <div class="tweets-wrap flex-1">
+
+              <div class="flex-row flex-middle flex-space">
+                <h3 class="heading text-nowrap icon-posts iconLeft flex-1">Latest Tweets ({{ tweets.length }})</h3>
+                <div>
+                  <span v-if="connected" class="text-green icon-check iconLeft">Connected</span>
+                  <span v-else class="text-red icon-close iconLeft">Disconnected</span>
+                </div>
+              </div>
+
+              <ul class="tweets-list">
+                <li class="tweets-item flex-row flex-stretch clickable" v-for="tw of tweetsList" :key="tw.id" title="Open Tweet" @click="openLink( tw.link )">
+                  <div class="tweets-image push-right">
+                    <img class="dropIn" :src="tw.avatar" :alt="tw.name" />
+                  </div>
+                  <div class="tweets-content flex-1">
+                    <h3 class="text-orange">{{ tw.name }} &nbsp;<small class="text-faded">@{{ tw.profile }}</small></h3>
+                    <div class="tweets-text text-wrap">{{ tw.text }}</div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div class="accounts-wrap">
+              <div class="flex-row flex-middle flex-space">
+                <h3 class="heading text-nowrap flex-1">Accounts ({{ accounts.length }})</h3>
+                <button class="btn icon-add text-green" title="Add Account" @click="addAccount"></button>
+              </div>
+              <ul class="accounts-list">
+                <li class="accounts-item flex-row flex-stretch flex-space" v-for="acc of accountsList" :key="acc.profile">
+                  <div class="text-orange clickable icon-twtr iconLeft text-clip push-right flex-1" title="Open Profile" @click="openProfile( acc.profile )">{{ acc.name }}</div>
+                  <button class="btn icon-close text-red" title="Delete Account" @click="removeAccount( acc.profile )"></button>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+
+        </div>
+      </main>
+
+    </div>
+
+    <!-- scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.16/vue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script src="public/js/scripts.js"></script>
+  </body>
+</html>

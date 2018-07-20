@@ -1,0 +1,414 @@
+/**
+ * Global resets and documet setup.
+ */
+*, *:before, *:after {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background-color: transparent;
+  text-transform: none;
+  text-shadow: none;
+  box-shadow: none;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-overflow-scrolling: touch;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transform-style: flat;
+  transition:
+    border-color 200ms ease-out,
+    background-color 200ms ease-out,
+    opacity 200ms ease-out,
+    transform 200ms ease-out;
+}
+
+/**
+ * Block types
+ */
+article, aside, details, figcaption, figure, footer, header, hgroup,
+menu, nav, section, main, summary, div, h1, h2, h3, h4, h5, h6, hr,
+p, ol, ul, form, img {
+  display: block;
+}
+
+/**
+ * Document
+ */
+html, body {
+  display: block;
+  position: relative;
+  max-width: 100vw;
+  min-height: 100vh;
+}
+html {
+  overflow: hidden;
+  overflow-y: scroll;
+}
+body {
+  font-family: 'Open Sans Condensed', 'Contrail One', Capriola, Consolas, Monaco, monospace;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.4em;
+  background-color: #0f0f1f;
+  background-attachment: fixed;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100%;
+  color: #90949a;
+}
+
+/**
+ * Form elements
+ */
+button, input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  outline: none;
+  border: none;
+}
+input, textarea {
+  display: block;
+}
+button {
+  display: inline-block;
+  cursor: pointer;
+}
+button:active,
+button:hover {
+  opacity: 0.8;
+}
+
+/**
+ * Hidden elements
+ */
+[v-cloak] {
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/**
+ * Animations
+ */
+@keyframes dropIn {
+    0% { opacity: 0; transform: scale( 1.5 ); }
+  100% { opacity: 1; transform: scale( 1 ); }
+}
+.dropIn {
+  transition: none;
+  animation: dropIn 200ms ease-out forwards;
+}
+
+/**
+ * Flexbox
+ */
+.flex-column {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+ .flex-wrap {
+  flex-wrap: wrap;
+}
+.flex-left {
+  justify-content: flex-start;
+}
+.flex-center {
+  justify-content: center;
+}
+.flex-right {
+  justify-content: flex-end;
+}
+.flex-space {
+  justify-content: space-between;
+}
+.flex-around {
+  justify-content: space-around;
+}
+.flex-top {
+  align-items: flex-start;
+}
+.flex-middle {
+  align-items: center;
+}
+.flex-bottom {
+  align-items: flex-end;
+}
+.flex-1 {
+  flex: 1;
+}
+.flex-2 {
+  flex: 2;
+}
+.flex-3 {
+  flex: 3;
+}
+.flex-4 {
+  flex: 4;
+}
+.flex-5 {
+  flex: 5;
+}
+
+/**
+ * Spacing
+ */
+.push-top {
+  margin-top: 1em;
+}
+.push-right {
+  margin-right: 1em;
+}
+.push-bottom {
+  margin-bottom: 1em;
+}
+.push-left {
+  margin-left: 1em;
+}
+.push-all {
+  margin: 1em;
+}
+.pad-top {
+  padding-top: 1em;
+}
+.pad-right {
+  padding-right: 1em;
+}
+.pad-bottom {
+  padding-bottom: 1em;
+}
+.pad-left {
+  padding-left: 1em;
+}
+.pad-all {
+  padding: 1em;
+}
+
+/**
+ * Text colors
+ */
+.text-red {
+  color: brown;
+}
+.text-green {
+  color: yellowgreen;
+}
+.text-blue {
+  color: cadetblue;
+}
+.text-yellow {
+  color: yellow;
+}
+.text-orange {
+  color: orange;
+}
+.text-grey {
+  color: grey;
+}
+.text-white {
+  color: white;
+}
+.text-faded {
+  color: rgba( 255, 255, 255, 0.3 );
+}
+.text-nowrap {
+  white-space: nowrap;
+}
+.text-clip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.text-wrap {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/**
+ * Clickable elements
+ */
+.clickable {
+  cursor: pointer;
+}
+.clickable:hover {
+  opacity: 0.8;
+}
+
+/**
+ * Common containers
+ */
+.wrapper {
+  display: block;
+  padding: 4em 0;
+}
+.container {
+  display: block;
+  position: relative;
+  margin: 0 auto;
+  padding: 0 1em;
+  width: 100%;
+  max-width: 1280px;
+}
+
+/**
+ * Common headings
+ */
+.heading {
+  display: block;
+  color: white;
+}
+
+/**
+ * Header
+ */
+.header {
+  display: block;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  background-color: #1f1f2f;
+  margin: 0 0 2em 0;
+  padding: 1em 0;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba( 0, 0, 0, 0.5 );
+}
+.header .header-content > .header-info > h1 {
+  letter-spacing: -1px;
+  line-height: normal;
+}
+.header .header-content > .header-search {
+  display: block;
+  position: relative;
+}
+.header .header-content > .header-search > input {
+  display: block;
+  width: 100%;
+  background-color: rgba( 255, 255, 255, 0.1 );
+  padding: 0 1.5em;
+  line-height: 2.5em;
+  color: white;
+  border-radius: 100px;
+}
+
+/**
+ * Main area
+ */
+.main {
+  padding: 7em 0;
+}
+
+/**
+ * Tweets list
+ */
+.tweets-wrap > .tweets-list {
+  display: block;
+  list-style: none;
+}
+.tweets-wrap > .tweets-list > .tweets-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: stretch;
+  margin-top: 1em;
+  padding-top: 1em;
+  border-top: 1px dashed rgba( 255, 255, 255, 0.1 );
+}
+.tweets-wrap > .tweets-list > .tweets-item  > .tweets-image {
+  margin-right: 1em;
+  width: 72px;
+}
+.tweets-wrap > .tweets-list > .tweets-item  > .tweets-image img {
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+  border-radius: 100px;
+}
+.tweets-wrap > .tweets-list > .tweets-item  > .tweets-content {
+  flex: 1;
+}
+.tweets-wrap > .tweets-list > .tweets-item  > .tweets-content > h3 {
+  margin: 0 0 .4em 0;
+}
+.tweets-wrap > .tweets-list > .tweets-item  > .tweets-content > h3 > a {
+  color: white;
+}
+.tweets-wrap > .tweets-list > .tweets-item  > .tweets-content > .tweets-text {
+  max-width: 780px;
+}
+
+/**
+ * Accounts list
+ */
+.accounts-wrap {
+  margin-left: 1em;
+  padding-left: 1em;
+  border-left: 1px dashed rgba( 255, 255, 255, 0.1 );
+  width: 300px;
+}
+.accounts-wrap > .accounts-list {
+  display: block;
+  list-style: none;
+}
+.accounts-wrap > .accounts-list > .accounts-item {
+  margin-top: 1em;
+  padding-top: 1em;
+  border-top: 1px dashed rgba( 255, 255, 255, 0.1 );
+}
+
+/**
+ * Glyph icons
+ */
+[class^="icon-"]:before,
+[class*=" icon-"]:before {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  width: 1em;
+  opacity: 0.8;
+  font-family: 'fontello';
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  font-weight: normal;
+  outline: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.iconLeft:before {
+  margin: 0 .4em 0 0;
+}
+.iconTop:before {
+  display: block;
+  margin: 0 auto 10px auto;
+}
+.iconMedium:before {
+  font-size: 200%;
+  line-height: 1em;
+}
+.iconLarge:before {
+  font-size: 400%;
+  line-height: 1em;
+}
+.iconHuge:before {
+  font-size: 600%;
+  line-height: 1em;
+}
+.icon-users:before { content: '\e800'; } /* '' */
+.icon-add:before { content: '\e801'; } /* '' */
+.icon-close:before { content: '\e802'; } /* '' */
+.icon-check:before { content: '\e803'; } /* '' */
+.icon-reset:before { content: '\e804'; } /* '' */
+.icon-reload:before { content: '\e805'; } /* '' */
+.icon-link:before { content: '\e806'; } /* '' */
+.icon-twtr:before { content: '\f099'; } /* '' */
+.icon-posts:before { content: '\f27a'; } /* '' */

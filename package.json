@@ -1,0 +1,17 @@
+{
+  "name": "crypto-scanner",
+  "version": "1.0.0",
+  "description": "This a simple Node.js / Socket.io web application that scans Twitter every few seconds for new tweets from different Twitter accounts related to crypto currencies, or any account that you want. The purpose of this application is to stream in new tweets from these accounts the moment they happen (within minutes) and get a browser notification.",
+  "author": "Rainner Lins <rainnerlins@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "console": "node ./src/console.js",
+    "server": "node ./src/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^6.0.0",
+    "jsdom": "^11.11.0",
+    "node-fetch": "^2.1.2",
+    "socket.io": "^2.1.1"
+  }
+}
