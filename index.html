@@ -49,7 +49,10 @@
                     <img class="dropIn" :src="tw.avatar" :alt="tw.name" />
                   </div>
                   <div class="tweets-content flex-1">
-                    <h3 class="text-orange">{{ tw.name }} &nbsp;<small class="text-faded">@{{ tw.profile }}</small></h3>
+                    <div class="flex-row flex-middle flex-space push-bottom">
+                      <h3 class="text-orange flex-1 text-clip">{{ tw.name }} &nbsp;<small class="text-faded">@{{ tw.handle }}</small></h3>
+                      <div class="text-clip"><span class="text-white">{{ tw.time }}</span></div>
+                    </div>
                     <div class="tweets-text text-wrap">{{ tw.text }}</div>
                   </div>
                 </li>
@@ -62,9 +65,10 @@
                 <button class="btn icon-add text-green" title="Add Account" @click="addAccount"></button>
               </div>
               <ul class="accounts-list">
-                <li class="accounts-item flex-row flex-stretch flex-space" v-for="acc of accountsList" :key="acc.profile">
-                  <div class="text-orange clickable icon-twtr iconLeft text-clip push-right flex-1" title="Open Profile" @click="openProfile( acc.profile )">{{ acc.name }}</div>
-                  <button class="btn icon-close text-red" title="Delete Account" @click="removeAccount( acc.profile )"></button>
+                <li class="accounts-item flex-row flex-stretch flex-space" v-for="acc of accountsList" :key="acc.handle">
+                  <div class="text-orange clickable text-clip push-right flex-1" title="Open Profile" @click="openProfile( acc.handle )">{{ acc.name }}</div>
+                  <div class="push-right"><span class="text-badge">{{ countTweets( acc.handle ) }}</span></div>
+                  <button class="btn icon-close text-red" title="Delete Account" @click="removeAccount( acc.handle )"></button>
                 </li>
               </ul>
             </div>
