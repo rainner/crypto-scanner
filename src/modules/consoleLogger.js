@@ -56,7 +56,7 @@ module.exports = function logger( enabled ) {
 
     // print empty line
     space() {
-      console.log( ' ' );
+      this.log( ' ' );
       return this;
     },
 
