@@ -13,10 +13,10 @@ const path            = require( 'path' );
 const http            = require( 'http' );
 const port            = 3000;
 
-// global data
-let accounts  = [];
+// accounts and tweets tracking
 let tracklist = [];
 let tweets    = [];
+let counter   = 0;
 let limit     = 50;
 
 // server handlers
@@ -24,39 +24,56 @@ const base = path.join( __dirname, '..' );
 const app  = http.createServer( requestHandler( base ) );
 const io   = socket.listen( app );
 
-// pass accounts and tweet data to all clients
-const tweetHandler = ( tweet ) => {
-  let { name, profile } = tweet;
-  logger.line().info( 'New tweet from:', '@'+ profile );
+// get list of accounts being tracked and send to client
+const sendData = () => {
+  const accounts = tracklist.map( t => t.accountInfo() );
+  io.emit( 'accounts', accounts );
+  io.emit( 'tweets', tweets );
+};
 
-  if ( !accounts.filter( a => a.profile === profile ).length ) {
-    accounts.push( { name, profile } );
-    io.emit( 'accounts', accounts );
-  }
+// handle a tweet fetched from a twitterHandler object
+const tweetHandler = ( err, tweet ) => {
+  if ( err ) return logger.line().error( 'TwitterHandlerError:', err );
+  logger.line().warn( 'New tweet from:', tweet.name +' (@'+ tweet.handle +') !' );
   tweets.unshift( tweet );
   if ( tweets.length > limit ) tweets = tweets.slice( 0, limit );
   io.emit( 'tweet', tweet );
+  sendData();
 };
 
 // add new twitter account to be tracked
-const trackAccount = ( profile ) => {
-  if ( tracklist.filter( t => t.profile === profile ).length ) return;
-  let tracker = twitterHandler( profile ).init( 120, tweetHandler );
-  tracklist.push( tracker );
+const trackAccount = ( handle, fetch ) => {
+  if ( !handle || tracklist.filter( t => t.handle === handle ).length ) return;
+  logger.line().info( 'Tracking twitter account:', handle );
+  let handler = twitterHandler( handle, tweetHandler );
+  if ( fetch ) handler.fetchTweets();
+  tracklist.unshift( handler );
 };
 
-// stop and remove tracked twitter account
-const untrackAccount = ( profile ) => {
-  let tracker = tracklist.filter( t => t.profile === profile ).shift();
-  if ( !tracker ) return;
+// remove tracked twitter account and tweets
+const untrackAccount = ( handle ) => {
+  if ( !handle ) return;
+  logger.line().info( 'Removing twitter account:', handle );
+  tracklist = tracklist.filter( t => t.handle !== handle );
+  tweets = tweets.filter( t => t.handle !== handle );
+};
 
-  tracker.stop();
-  accounts = accounts.filter( a => a.profile !== profile );
-  tracklist = tracklist.filter( t => t.profile !== profile );
-  tweets = tweets.filter( t => t.profile !== profile );
+// add accounts to be tracked
+const addAccounts = ( list ) => {
+  if ( !Array.isArray( list ) ) return;
+  logger.line().info( 'Adding accounts from list:', list.length | 0 );
+  for ( let a of list ) {
+    if ( a && a.handle ) trackAccount( a.handle );
+  }
+};
 
-  io.emit( 'accounts', accounts );
-  io.emit( 'tweets', tweets );
+// cycle through each account handler and fetch tweets
+const timeoutHandler = () => {
+  if ( !tracklist.length ) return;
+  let last = tracklist.length - 1;
+  let handler = tracklist[ counter ];
+  counter = ( counter < last ) ? ( counter + 1 ) : 0;
+  handler.fetchTweets();
 };
 
 // greet new client
@@ -65,19 +82,24 @@ io.on( 'connection', ( client ) => {
   // send current data to client
   logger.line().info( 'Socket client connected:', client.id );
   client.emit( 'connected', client.id );
-  client.emit( 'accounts', accounts );
-  client.emit( 'tweets', tweets );
+  sendData();
 
   // client wants to track new account
-  client.on( 'track', profile => {
-    logger.line().info( 'Tracking twitter account:', profile );
-    trackAccount( profile );
+  client.on( 'track', handle => {
+    trackAccount( handle, true );
+    sendData();
   });
 
   // client wants to remove existing account
-  client.on( 'untrack', profile => {
-    logger.line().info( 'Removing twitter account:', profile );
-    untrackAccount( profile );
+  client.on( 'untrack', handle => {
+    untrackAccount( handle );
+    sendData();
+  });
+
+  // merge client accounts with server list
+  client.on( 'accounts', list => {
+    addAccounts( list );
+    sendData();
   });
 });
 
@@ -85,9 +107,7 @@ io.on( 'connection', ( client ) => {
 app.listen( parseInt( port ) );
 logger.line().success( 'App running at', 'http://localhost:'+ port +' ...' );
 
-// start fetching tweets
-for ( let i = 0; i < twitterProfiles.length; ++i ) {
-  let profile = twitterProfiles[ i ];
-  let timeout = 1000 * ( i * 1 );
-  setTimeout( () => { trackAccount( profile ) }, timeout );
-}
+// add default accounts to tracklist and start timer
+for ( let handle of twitterProfiles ) trackAccount( handle );
+setInterval( timeoutHandler, 1000 );
+
