@@ -229,6 +229,17 @@ button:hover {
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
+.text-badge {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 70%;
+  line-height: 1em;
+  padding: .4em .8em;
+  color: white;
+  background-color: rgba( 255, 255, 255, 0.1 );
+  border-radius: 100px;
+}
 
 /**
  * Clickable elements
@@ -317,8 +328,9 @@ button:hover {
   align-items: flex-start;
   justify-content: stretch;
   margin-top: 1em;
-  padding-top: 1em;
-  border-top: 1px dashed rgba( 255, 255, 255, 0.1 );
+  padding: 1em;
+  background-color: rgba( 255, 255, 255, 0.075 );
+  border-radius: 4px;
 }
 .tweets-wrap > .tweets-list > .tweets-item  > .tweets-image {
   margin-right: 1em;
