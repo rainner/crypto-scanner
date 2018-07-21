@@ -1,114 +1,114 @@
 /**
  * Handles fetching and parsing tweets for a profile.
  */
-const debug     = process.env.DEBUG | 0;
-const logger    = require( './consoleLogger' )( debug );
 const scraper   = require( './twitterScraper' );
 const fetch     = require( 'node-fetch' );
 const jsdom     = require( 'jsdom' );
 const { JSDOM } = jsdom;
 
-// wrapper function
-module.exports = function twitterHandler( profile, limit ) {
+/**
+ * Twitter Handler wrapper
+ * @param {String}    handle    Twitter account handle
+ * @param {Function}  callback  Handler function for a tweet when loaded
+ */
+module.exports = function twitterHandler( handle, callback ) {
 
-  // request params
-  const host     = 'twitter.com';
-  const endpoint = 'https://'+ host +'/'+ profile;
-  const headers  = { // look ma, i'm a browser.
-    'Host': host,
-    'Referer': endpoint,
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:62.0) Gecko/20100101 Firefox/62.0',
-    'Cache-Control': 'no-cache',
-    'Pragma': 'no-cache',
-    'DNT': 1,
-  };
+  // sanitize and check input
+  handle   = String( handle || '' ).replace( /[^\w]+/g, '' ).trim();
+  callback = ( typeof callback === 'function' ) ? callback : function() {};
+  if ( !handle ) throw 'Must provide a valid Twitter handle.';
 
-  // handler object
+  // twitter account handler object
   return {
-    // profile ref
-    profile,
-
-    // accumulated tweets for this account
-    _tweets: [],
-
-    // timeout to wait before fetching again (secs)
-    _timeout: 300,
-
-    // handler for new tweets
-    _handler: null,
-
-    // settimeout id
-    _sto: null,
+    uid    : '',      // account user id (int)
+    handle : handle,  // account @handle
+    name   : handle,  // account display name
+    avatar : '',      // account avatar url
+    tweets : [],      // accumulated tweets
+    last   : 0,       // last fetch time
+    delay  : 120,     // prevent fetch (secs)
 
     // fetch tweets from account
-    _fetchTweets() {
-      this.stopTimer();
-      logger.line().success( 'Fetching', endpoint +' ...' );
+    fetchTweets( delay ) {
+      const now = Date.now();
+      const elapsed = ( now - this.last ) / 1000;
 
+      this.delay = parseInt( delay ) || this.delay;
+      if ( this.delay && elapsed < this.delay ) return false; // wait ...
+
+      const host = 'twitter.com';
+      const endpoint = 'https://'+ host +'/'+ this.handle;
+      const headers = { // look ma, i'm a browser.
+        'Host': host,
+        'Referer': endpoint,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:62.0) Gecko/20100101 Firefox/62.0',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'DNT': 1,
+      };
+      // send request ...
       fetch( endpoint, { headers } )
-        .then( response => {
-          let status = response.status | 0;
-          let html   = response.text();
-
-          if ( status >= 400 && status < 500 ) {
-            throw '('+ status +') Endpoint is unavailable '+ endpoint +' !';
-          }
-          return html;
-        })
-        .then( html => {
-          this._parseTweets( html );
-          this._sto = setTimeout( this._fetchTweets.bind( this ), 1000 * this._timeout );
-        })
-        .catch( err => {
-          logger.line().error( 'Error:', err.message || 'Could not fetch remote url ('+ endpoint +').' );
-        });
+      .then( this._handleResponse.bind( this ) )
+      .then( this._parseTweets.bind( this ) )
+      .catch( this._handleError.bind( this ) );
+      this.last = now;
+      return true;
     },
 
-    // parse data returned from fetch
-    _parseTweets( html ) {
-      const limitCount = parseInt( limit ) || 1;
-      const virtualConsole = new jsdom.VirtualConsole();
-      const doc = new JSDOM( html, { virtualConsole } ).window.document;
-      const tweets = scraper( doc, { limitCount } );
-
-      for ( let tw of tweets ) {
-        if ( this._tweets.filter( t => t.id === tw.id ).length ) continue;
-        this.profile = tw.profile;
-        this._tweets.push( tw );
-        this._handler( tw );
-      }
+    // get account info
+    accountInfo() {
+      let { uid, handle, name, avatar } = this;
+      return { uid, handle, name, avatar };
     },
 
     // get all tweets
     getTweets() {
-      return this._tweets.slice();
+      return this.tweets.slice();
+    },
+
+    // get last tweet
+    lastTweet() {
+      return this.tweets.slice().shift();
     },
 
     // flush tweets
     flushTweets() {
-      this._tweets = [];
+      this.tweets = [];
       return this;
     },
 
-    // stop fetching
-    stopTimer() {
-      if ( this._sto ) clearTimeout( this._sto );
-      return this;
+    // handle response data from fetch
+    _handleResponse( response ) {
+      let status = response.status | 0;
+      let html   = response.text();
+      if ( !status || !html ) throw 'Could not fetch tweets for account @'+ this.handle +'.';
+      if ( status >= 400 && status < 500 ) throw '('+ status +') Endpoint is unavailable for account @'+ this.handle +'.';
+      return html;
     },
 
-    // start fetching tweets from account
-    init( timeout, handler ) {
-      this._timeout = parseInt( timeout ) || this._timeout;
-      this._handler = ( typeof handler === 'function' ) ? handler : function() {};
-      this._fetchTweets();
-      return this;
+    // parse data returned from fetch
+    _parseTweets( html ) {
+      if ( !html ) return;
+      // parse tweets from html
+      const vc  = new jsdom.VirtualConsole();
+      const doc = new JSDOM( html, { virtualConsole: vc } ).window.document;
+      const tw  = scraper( doc, { limitCount: 1 } ).shift();
+      // no tweets found or already added
+      if ( !tw || this.tweets.filter( t => t.id === tw.id ).length ) return;
+      // update profile data with tweet data
+      this.uid    = tw.uid;
+      this.handle = tw.handle;
+      this.name   = tw.name;
+      this.avatar = tw.avatar;
+      this.tweets.unshift( tw );
+      // send latest tweet to callback handler
+      callback( null, tw );
     },
 
-    // stop and flush
-    stop() {
-      this.stopTimer();
-      this.flushTweets();
+    // pass error to callback
+    _handleError( err ) {
+      callback( err.message || 'Problem fetching tweets from account @'+ this.handle +'.' );
     },
   }
 }
