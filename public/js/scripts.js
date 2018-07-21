@@ -53,6 +53,8 @@ new Vue({
     socket: null,
     connected: false,
     clientId: '',
+    defaultTitle: document.title,
+    storeKey: '_twitter_accounts_list_',
     tweets: [],
     accounts: [],
     search: '',
@@ -68,7 +70,7 @@ new Vue({
 
       if ( search && search.length > 1 ) {
         let reg = new RegExp( '\\b'+ search, 'gi' );
-        list = list.filter( t => reg.test( [ t.name, t.profile, t.text ].join( ' ' ) ) );
+        list = list.filter( t => reg.test( [ t.name, t.handle, t.text ].join( ' ' ) ) );
       }
       return list;
     },
@@ -80,7 +82,7 @@ new Vue({
 
       if ( search && search.length > 1 ) {
         let reg = new RegExp( '\\b'+ search, 'gi' );
-        list = list.filter( a => reg.test( [ a.name, a.profile ].join( ' ' ) ) );
+        list = list.filter( a => reg.test( [ a.name, a.handle ].join( ' ' ) ) );
       }
       return list;
     },
@@ -94,35 +96,84 @@ new Vue({
       return String( this.search || '' ).replace( /[^\w]+/g, '' ).replace( /[\r\n\s\t]+/g, ' ' ).trim();
     },
 
-    //
-    searchList( list, search ) {
-      let reg = new RegExp();
-    },
-
     // open web link
     openLink( link ) {
       window.open( link, '_blank' );
     },
 
-    // open twitter link for a profile
-    openProfile( profile ) {
-      this.openLink( 'https://twitter.com/'+ profile );
+    // open twitter link for a handle
+    openProfile( handle ) {
+      this.openLink( 'https://twitter.com/'+ handle );
+    },
+
+    // count number of tweets for a handle
+    countTweets( handle ) {
+      return this.tweets.filter( t => t.handle === handle ).length;
+    },
+
+    // load accounts list from store
+    loadAccounts() {
+      try {
+        let data = localStorage.getItem( this.storeKey ) || '[]';
+        let accounts = JSON.parse( data );
+        if ( !Array.isArray( accounts ) ) return;
+        this.accounts = accounts;
+      }
+      catch ( err ) {
+        console.info( 'localStorage:', err.message || err );
+      }
+    },
+
+    // save accounts list to store
+    saveAccounts() {
+      try {
+        let data = JSON.stringify( this.accounts );
+        localStorage.setItem( this.storeKey, data );
+      }
+      catch ( err ) {
+        console.info( 'localStorage:', err.message || err );
+      }
+    },
+
+    // send accounts data to the server
+    sendAccounts() {
+      if ( !this.socket ) return;
+      this.socket.emit( 'accounts', this.accounts );
     },
 
     // add new account to be tracked
     addAccount() {
       if ( !this.socket ) return;
-      const profile = String( prompt( 'Enter a Twitter @handle', '' ) || '' ).replace( /[^\w]+/g, '' );
-      if ( !profile ) return;
-      if ( !confirm( 'Start tracking tweets from @'+ profile +'?' ) ) return;
-      this.socket.emit( 'track', profile );
+      const handle = String( prompt( 'Enter a Twitter @handle', '' ) || '' ).replace( /[^\w]+/g, '' );
+      if ( !handle ) return;
+      if ( !confirm( 'Start tracking tweets from @'+ handle +'?' ) ) return;
+      this.socket.emit( 'track', handle );
     },
 
     // clear and remove account from list
-    removeAccount( profile ) {
+    removeAccount( handle ) {
       if ( !this.socket ) return;
-      if ( !confirm( 'Stop tracking tweets from @'+ profile +'?' ) ) return;
-      this.socket.emit( 'untrack', profile );
+      if ( !confirm( 'Stop tracking tweets from @'+ handle +'?' ) ) return;
+      this.socket.emit( 'untrack', handle );
+    },
+
+    // append new tweet to list
+    addTweet( tweet ) {
+      let tweets = this.tweets.slice();
+      tweets.unshift( tweet );
+      this.tweets = tweets;
+    },
+
+    // trigger browser notification
+    sendNotification( tweet ) {
+      let { name, text, avatar, link } = tweet;
+      let isnew = ( this.tweets.length > this.accounts.length );
+      if ( isnew ) notify.add( name, text, avatar, link, true );
+    },
+
+    // update page title
+    updateTitle() {
+      document.title = '('+ this.tweets.length +') '+ this.defaultTitle;
     },
 
     // setup socket object and handlers
@@ -142,27 +193,26 @@ new Vue({
       // client connected, get id
       this.socket.on( 'connected', clientId => {
         this.clientId = clientId;
+        this.sendAccounts();
       });
 
       // get available tweets data
       this.socket.on( 'tweets', tweets => {
         this.tweets = Array.isArray( tweets ) ? tweets.slice() : this.tweets;
+        this.updateTitle();
       });
 
       // get list of accounts being tracked
       this.socket.on( 'accounts', accounts => {
         this.accounts = Array.isArray( accounts ) ? accounts.slice() : this.accounts;
+        this.saveAccounts();
       });
 
       // get latest new tweet data
       this.socket.on( 'tweet', tweet => {
-        let tweets = this.tweets.slice();
-        tweets.unshift( tweet );
-        this.tweets = tweets;
-        // show tweet notification
-        let { name, text, avatar, link } = tweet;
-        let isnew = ( this.tweets.length > this.accounts.length );
-        if ( isnew ) notify.add( name, text, avatar, link, true );
+        this.addTweet( tweet );
+        this.sendNotification( tweet );
+        this.updateTitle();
       });
     },
 
@@ -175,6 +225,7 @@ new Vue({
 
   // vue instance mounted
   mounted() {
+    this.loadAccounts();
     this.setupSocket();
     this.setupPermissions();
   },
