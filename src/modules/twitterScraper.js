@@ -58,16 +58,20 @@ module.exports = function twitterScraper( doc, options ) {
     if ( !text ) continue;
 
     // look for rest of tweet data, skip if missing data
-    let id      = tweet.getAttribute( 'data-tweet-id' ) || '';
-    let uid     = tweet.getAttribute( 'data-user-id' ) || '';
-    let name    = tweet.getAttribute( 'data-name' ) || '';
-    let profile = tweet.getAttribute( 'data-screen-name' ) || '';
-    let link    = 'https://twitter.com'+ tweet.getAttribute( 'data-permalink-path' ) || '';
-    let time    = Number( item.querySelector( '.js-short-timestamp' ).getAttribute( 'data-time-ms' ) || now );
-    if ( !id || !uid || !profile ) continue;
+    let id     = tweet.getAttribute( 'data-tweet-id' ) || '';
+    let uid    = tweet.getAttribute( 'data-user-id' ) || '';
+    let name   = tweet.getAttribute( 'data-name' ) || '';
+    let handle = tweet.getAttribute( 'data-screen-name' ) || '';
+    let link   = 'https://twitter.com'+ tweet.getAttribute( 'data-permalink-path' ) || '';
+    let time   = Number( item.querySelector( '.js-short-timestamp' ).getAttribute( 'data-time-ms' ) || now );
+    if ( !id || !uid || !handle ) continue;
+
+    // format time
+    let d = new Date( time );
+    time = d.toDateString();
 
     // add all data to output
-    output.push( { id, uid, time, name, profile, avatar, text, link } );
+    output.push( { id, uid, time, name, handle, avatar, text, link } );
     count++;
   }
   return output;
