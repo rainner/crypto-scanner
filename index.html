@@ -22,7 +22,7 @@
               <h1 class="icon-twtr iconLeft text-blue text-clip">Twitter Crypto Scanner</h1>
             </div>
             <form class="header-search" action="#" autocomplete="off">
-              <input type="text" name="search" placeholder="Search page..." v-model="search" />
+              <input type="text" name="search" placeholder="Search tweets..." ref="searchInput" v-model="search" />
             </form>
           </div>
         </div>
@@ -44,6 +44,20 @@
               </div>
 
               <ul class="tweets-list">
+
+                <li class="tweets-item flex-row flex-stretch clickable" v-if="!tweetsList.length">
+                  <div class="tweets-image push-right">
+                    <img class="dropIn" src="public/img/notification.png" alt="Notice" />
+                  </div>
+                  <div class="tweets-content flex-1">
+                    <h3 class="text-orange text-clip">Not Tweets Found</h3>
+                    <div>
+                      <span v-if="search">Could not find anything for search ({{ search }}), check your spelling and try again.</span>
+                      <span v-else>No tweets loaded by the server yet. Wait for new tweets to come in, or add a new account on the right.</span>
+                    </div>
+                  </div>
+                </li>
+
                 <li class="tweets-item flex-row flex-stretch clickable" v-for="tw of tweetsList" :key="tw.id" title="Open Tweet" @click="openLink( tw.link )">
                   <div class="tweets-image push-right">
                     <img class="dropIn" :src="tw.avatar" :alt="tw.name" />
@@ -66,7 +80,7 @@
               </div>
               <ul class="accounts-list">
                 <li class="accounts-item flex-row flex-stretch flex-space" v-for="acc of accountsList" :key="acc.handle">
-                  <div class="text-orange clickable text-clip push-right flex-1" title="Open Profile" @click="openProfile( acc.handle )">{{ acc.name }}</div>
+                  <div class="text-orange clickable text-clip push-right flex-1" title="Search tweets" @click="search = acc.handle">{{ acc.name }}</div>
                   <div class="push-right"><span class="text-badge">{{ countTweets( acc.handle ) }}</span></div>
                   <button class="btn icon-close text-red" title="Delete Account" @click="removeAccount( acc.handle )"></button>
                 </li>

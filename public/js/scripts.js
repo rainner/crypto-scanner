@@ -55,46 +55,51 @@ new Vue({
     clientId: '',
     defaultTitle: document.title,
     storeKey: '_twitter_accounts_list_',
+    newCount: 0,
     tweets: [],
     accounts: [],
     search: '',
   },
 
+  // watch methods
+  watch: {
+    search() {
+      if ( this.search && this.$refs.searchInput ) {
+        this.$refs.searchInput.focus();
+      }
+    }
+  },
+
   // computed methods
   computed: {
 
-    // filter tweets list
+    // search tweets list
     tweetsList() {
       let list = this.tweets.slice();
-      let search = this.searchStr();
+      let search = String( this.search || '' ).replace( /[^\w]+/g, '' ).replace( /[\r\n\s\t]+/g, ' ' ).trim();
 
       if ( search && search.length > 1 ) {
         let reg = new RegExp( '\\b'+ search, 'gi' );
         list = list.filter( t => reg.test( [ t.name, t.handle, t.text ].join( ' ' ) ) );
+        window.scrollTo( 0, 0 );
       }
       return list;
     },
 
-    // filter accounts list
+    // sort accounts list by twitter display names
     accountsList() {
-      let list = this.accounts.slice();
-      let search = this.searchStr();
-
-      if ( search && search.length > 1 ) {
-        let reg = new RegExp( '\\b'+ search, 'gi' );
-        list = list.filter( a => reg.test( [ a.name, a.handle ].join( ' ' ) ) );
-      }
-      return list;
+      return this.accounts.sort( ( a, b ) => {
+        let _a = a.name.toUpperCase();
+        let _b = b.name.toUpperCase();
+        if ( _a < _b ) return -1;
+        if ( _a > _b ) return 1;
+        return 0;
+      });
     },
   },
 
   // custom methods
   methods: {
-
-    // get cleaned search string
-    searchStr() {
-      return String( this.search || '' ).replace( /[^\w]+/g, '' ).replace( /[\r\n\s\t]+/g, ' ' ).trim();
-    },
 
     // open web link
     openLink( link ) {
@@ -166,14 +171,19 @@ new Vue({
 
     // trigger browser notification
     sendNotification( tweet ) {
+      if ( document.hasFocus() ) {
+        this.newCount = 0;
+        return;
+      }
       let { name, text, avatar, link } = tweet;
-      let isnew = ( this.tweets.length > this.accounts.length );
-      if ( isnew ) notify.add( name, text, avatar, link, true );
+      notify.add( name, text, avatar, link, true );
+      this.newCount++;
     },
 
     // update page title
     updateTitle() {
-      document.title = '('+ this.tweets.length +') '+ this.defaultTitle;
+      if ( this.newCount ) { document.title = '('+ this.newCount +') '+ this.defaultTitle; }
+      else { document.title = this.defaultTitle; }
     },
 
     // setup socket object and handlers
@@ -196,16 +206,16 @@ new Vue({
         this.sendAccounts();
       });
 
-      // get available tweets data
-      this.socket.on( 'tweets', tweets => {
-        this.tweets = Array.isArray( tweets ) ? tweets.slice() : this.tweets;
-        this.updateTitle();
-      });
-
       // get list of accounts being tracked
       this.socket.on( 'accounts', accounts => {
         this.accounts = Array.isArray( accounts ) ? accounts.slice() : this.accounts;
         this.saveAccounts();
+      });
+
+      // get available tweets data
+      this.socket.on( 'tweets', tweets => {
+        this.tweets = Array.isArray( tweets ) ? tweets.slice() : this.tweets;
+        this.updateTitle();
       });
 
       // get latest new tweet data
@@ -228,6 +238,17 @@ new Vue({
     this.loadAccounts();
     this.setupSocket();
     this.setupPermissions();
+
+    // reset count and title on doc focus
+    document.addEventListener( 'focus', e => {
+      this.newCount = 0;
+      this.updateTitle();
+    });
+    // reset search when hitting ESC key
+    document.addEventListener( 'keyup', e => {
+      let code = e.keyCode || e.key || 0;
+      if ( code === 27 ) this.search = '';
+    });
   },
 });
 
