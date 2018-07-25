@@ -54,10 +54,10 @@ new Vue({
     connected: false,
     clientId: '',
     defaultTitle: document.title,
-    storeKey: '_twitter_accounts_list_',
     newCount: 0,
     tweets: [],
     accounts: [],
+    checking: [],
     search: '',
   },
 
@@ -86,14 +86,11 @@ new Vue({
       return list;
     },
 
-    // sort accounts list by twitter display names
+    // accounts list with checking indicator
     accountsList() {
-      return this.accounts.sort( ( a, b ) => {
-        let _a = a.name.toUpperCase();
-        let _b = b.name.toUpperCase();
-        if ( _a < _b ) return -1;
-        if ( _a > _b ) return 1;
-        return 0;
+      return this.accounts.slice().map( a => {
+        a.checking = this.checking.filter( c => c === a.handle ).length;
+        return a;
       });
     },
   },
@@ -116,36 +113,6 @@ new Vue({
       return this.tweets.filter( t => t.handle === handle ).length;
     },
 
-    // load accounts list from store
-    loadAccounts() {
-      try {
-        let data = localStorage.getItem( this.storeKey ) || '[]';
-        let accounts = JSON.parse( data );
-        if ( !Array.isArray( accounts ) ) return;
-        this.accounts = accounts;
-      }
-      catch ( err ) {
-        console.info( 'localStorage:', err.message || err );
-      }
-    },
-
-    // save accounts list to store
-    saveAccounts() {
-      try {
-        let data = JSON.stringify( this.accounts );
-        localStorage.setItem( this.storeKey, data );
-      }
-      catch ( err ) {
-        console.info( 'localStorage:', err.message || err );
-      }
-    },
-
-    // send accounts data to the server
-    sendAccounts() {
-      if ( !this.socket ) return;
-      this.socket.emit( 'accounts', this.accounts );
-    },
-
     // add new account to be tracked
     addAccount() {
       if ( !this.socket ) return;
@@ -160,13 +127,6 @@ new Vue({
       if ( !this.socket ) return;
       if ( !confirm( 'Stop tracking tweets from @'+ handle +'?' ) ) return;
       this.socket.emit( 'untrack', handle );
-    },
-
-    // append new tweet to list
-    addTweet( tweet ) {
-      let tweets = this.tweets.slice();
-      tweets.unshift( tweet );
-      this.tweets = tweets;
     },
 
     // trigger browser notification
@@ -193,34 +153,40 @@ new Vue({
       // socket open
       this.socket.on( 'connect', () => {
         this.connected = true;
+        this.checking = [];
       });
 
       // socket closed
       this.socket.on( 'disconnect', () => {
         this.connected = false;
+        this.checking = [];
       });
 
       // client connected, get id
       this.socket.on( 'connected', clientId => {
         this.clientId = clientId;
-        this.sendAccounts();
+      });
+
+      // get list of accounts being checked
+      this.socket.on( 'checking', list => {
+        this.checking = Array.isArray( list ) ? list : [];
       });
 
       // get list of accounts being tracked
       this.socket.on( 'accounts', accounts => {
-        this.accounts = Array.isArray( accounts ) ? accounts.slice() : this.accounts;
-        this.saveAccounts();
+        if ( !Array.isArray( accounts ) ) return;
+        this.accounts = accounts;
       });
 
       // get available tweets data
       this.socket.on( 'tweets', tweets => {
-        this.tweets = Array.isArray( tweets ) ? tweets.slice() : this.tweets;
+        if ( !Array.isArray( tweets ) ) return;
+        this.tweets = tweets;
         this.updateTitle();
       });
 
       // get latest new tweet data
       this.socket.on( 'tweet', tweet => {
-        this.addTweet( tweet );
         this.sendNotification( tweet );
         this.updateTitle();
       });
@@ -235,7 +201,6 @@ new Vue({
 
   // vue instance mounted
   mounted() {
-    this.loadAccounts();
     this.setupSocket();
     this.setupPermissions();
 
