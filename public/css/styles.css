@@ -236,7 +236,6 @@ button:hover {
   font-size: 70%;
   line-height: 1em;
   padding: .4em .8em;
-  color: white;
   background-color: rgba( 255, 255, 255, 0.1 );
   border-radius: 100px;
 }
@@ -382,6 +381,10 @@ button:hover {
 /**
  * Glyph icons
  */
+@keyframes iconSpin {
+    0% { transform: rotate( 0deg ); }
+  100% { transform: rotate( 359deg ); }
+}
 [class^="icon-"]:before,
 [class*=" icon-"]:before {
   display: inline-block;
@@ -419,6 +422,12 @@ button:hover {
 .iconHuge:before {
   font-size: 600%;
   line-height: 1em;
+}
+.iconSpin:before {
+  animation-name: iconSpin;
+  animation-duration: 1s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 .icon-users:before { content: '\e800'; } /* '' */
 .icon-add:before { content: '\e801'; } /* '' */
