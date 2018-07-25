@@ -81,7 +81,10 @@
               <ul class="accounts-list">
                 <li class="accounts-item flex-row flex-stretch flex-space" v-for="acc of accountsList" :key="acc.handle">
                   <div class="text-orange clickable text-clip push-right flex-1" title="Search tweets" @click="search = acc.handle">{{ acc.name }}</div>
-                  <div class="push-right"><span class="text-badge">{{ countTweets( acc.handle ) }}</span></div>
+                  <div class="push-right">
+                    <span v-if="acc.checking" class="text-white icon-reload iconSpin" title="Checking..."></span>
+                    <span v-else class="text-badge text-white">{{ countTweets( acc.handle ) }}</span>
+                  </div>
                   <button class="btn icon-close text-red" title="Delete Account" @click="removeAccount( acc.handle )"></button>
                 </li>
               </ul>
